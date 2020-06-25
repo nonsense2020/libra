@@ -48,13 +48,13 @@ macro_rules! new_name {
 // Program
 //**************************************************************************************************
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Program {
     pub source_definitions: Vec<Definition>,
     pub lib_definitions: Vec<Definition>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum Definition {
     Module(ModuleDefinition),
@@ -62,7 +62,7 @@ pub enum Definition {
     Script(Script),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Script {
     pub loc: Loc,
     pub uses: Vec<Use>,
@@ -71,7 +71,7 @@ pub struct Script {
     pub specs: Vec<SpecBlock>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Use {
     Module(ModuleIdent, Option<ModuleName>),
     Members(ModuleIdent, Vec<(Name, Option<Name>)>),
@@ -91,14 +91,14 @@ pub struct ModuleIdent_ {
 #[derive(Debug, Hash, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub struct ModuleIdent(pub Spanned<ModuleIdent_>);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ModuleDefinition {
     pub loc: Loc,
     pub name: ModuleName,
     pub members: Vec<ModuleMember>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum ModuleMember {
     Function(Function),
     Struct(StructDefinition),
@@ -116,7 +116,7 @@ new_name!(StructName);
 
 pub type ResourceLoc = Option<Loc>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct StructDefinition {
     pub loc: Loc,
     pub resource_opt: ResourceLoc,
@@ -125,7 +125,7 @@ pub struct StructDefinition {
     pub fields: StructFields,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum StructFields {
     Defined(Vec<(Field, Type)>),
     Native(Loc),
@@ -137,27 +137,27 @@ pub enum StructFields {
 
 new_name!(FunctionName);
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct FunctionSignature {
     pub type_parameters: Vec<(Name, Kind)>,
     pub parameters: Vec<(Var, Type)>,
     pub return_type: Type,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum FunctionVisibility {
     Public(Loc),
     Internal,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum FunctionBody_ {
     Defined(Sequence),
     Native,
 }
 pub type FunctionBody = Spanned<FunctionBody_>;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 // (public?) foo<T1(: copyable?), ..., TN(: copyable?)>(x1: t1, ..., xn: tn): t1 * ... * tn {
 //    body
 //  }
@@ -177,7 +177,7 @@ pub struct Function {
 
 new_name!(ConstantName);
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Constant {
     pub loc: Loc,
     pub signature: Type,
@@ -191,7 +191,7 @@ pub struct Constant {
 
 // Specification block:
 //    SpecBlock = "spec" <SpecBlockTarget> "{" SpecBlockMember* "}"
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SpecBlock_ {
     pub target: SpecBlockTarget,
     pub uses: Vec<Use>,
@@ -200,7 +200,7 @@ pub struct SpecBlock_ {
 
 pub type SpecBlock = Spanned<SpecBlock_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SpecBlockTarget_ {
     Code,
     Module,
@@ -211,7 +211,7 @@ pub enum SpecBlockTarget_ {
 
 pub type SpecBlockTarget = Spanned<SpecBlockTarget_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PragmaProperty_ {
     pub name: Name,
     pub value: Option<Value>,
@@ -219,7 +219,7 @@ pub struct PragmaProperty_ {
 
 pub type PragmaProperty = Spanned<PragmaProperty_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SpecApplyPattern_ {
     pub visibility: Option<FunctionVisibility>,
     pub name_pattern: Vec<SpecApplyFragment>,
@@ -228,7 +228,7 @@ pub struct SpecApplyPattern_ {
 
 pub type SpecApplyPattern = Spanned<SpecApplyPattern_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SpecApplyFragment_ {
     Wildcard,
     NamePart(Name),
@@ -236,7 +236,7 @@ pub enum SpecApplyFragment_ {
 
 pub type SpecApplyFragment = Spanned<SpecApplyFragment_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[allow(clippy::large_enum_variant)]
 pub enum SpecBlockMember_ {
     Condition {
@@ -277,7 +277,7 @@ pub enum SpecBlockMember_ {
 pub type SpecBlockMember = Spanned<SpecBlockMember_>;
 
 // Specification condition kind.
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum SpecConditionKind {
     Assert,
     Assume,
@@ -297,7 +297,7 @@ pub enum SpecConditionKind {
 }
 
 // Specification invariant kind.
-#[derive(Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum InvariantKind {
     Data,
     Update,
@@ -312,7 +312,7 @@ pub enum InvariantKind {
 
 // A ModuleAccess references a local or global name or something from a module,
 // either a struct type or a function.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ModuleAccess_ {
     // N
     Name(Name),
@@ -336,7 +336,7 @@ pub enum Kind_ {
 }
 pub type Kind = Spanned<Kind_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type_ {
     // N
     // N<t1, ... , tn>
@@ -360,7 +360,7 @@ pub type Type = Spanned<Type_>;
 
 new_name!(Var);
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Bind_ {
     // x
     Var(Var),
@@ -372,7 +372,7 @@ pub type Bind = Spanned<Bind_>;
 // b1, ..., bn
 pub type BindList = Spanned<Vec<Bind>>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Value_ {
     // 0x<hex representation up to 64 digits with padding 0s>
     Address(Address),
@@ -392,14 +392,14 @@ pub enum Value_ {
 }
 pub type Value = Spanned<Value_>;
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum UnaryOp_ {
     // !
     Not,
 }
 pub type UnaryOp = Spanned<UnaryOp_>;
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum BinOp_ {
     // Int ops
     // +
@@ -449,7 +449,7 @@ pub enum BinOp_ {
 }
 pub type BinOp = Spanned<BinOp_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(clippy::large_enum_variant)]
 pub enum Exp_ {
     Value(Value),
@@ -530,7 +530,7 @@ pub type Exp = Spanned<Exp_>;
 // { e1; ... ; en; }
 // The Loc field holds the source location of the final semicolon, if there is one.
 pub type Sequence = (Vec<Use>, Vec<SequenceItem>, Option<Loc>, Box<Option<Exp>>);
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(clippy::large_enum_variant)]
 pub enum SequenceItem_ {
     // e;

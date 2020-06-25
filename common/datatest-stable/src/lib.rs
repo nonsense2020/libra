@@ -32,4 +32,4 @@ pub mod utils;
 
 pub type Result<T> = ::std::result::Result<T, Box<dyn ::std::error::Error>>;
 
-pub use self::runner::{runner, Requirements};
+pub use self::runner::{runner,run_tests, Requirements, Test, TestOpts, TestResult, TestSummary};

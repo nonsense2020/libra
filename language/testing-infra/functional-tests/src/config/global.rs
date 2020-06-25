@@ -12,6 +12,7 @@ use language_e2e_tests::{
 use libra_config::generator;
 use libra_crypto::PrivateKey;
 use libra_types::account_config;
+use move_core_types::account_address::AccountAddress;
 use move_core_types::identifier::Identifier;
 use once_cell::sync::Lazy;
 use std::{
@@ -66,6 +67,7 @@ impl FromStr for Balance {
 pub struct AccountDefinition {
     /// Name of the account. The name is case insensitive.
     pub name: String,
+    pub address: Option<AccountAddress>,
     /// The initial balance of the account.
     pub balance: Option<Balance>,
     /// The initial sequence number of the account.
@@ -131,21 +133,44 @@ impl FromStr for Entry {
                 .split(|c: char| c == ',' || c.is_whitespace())
                 .filter(|s| !s.is_empty())
                 .collect();
-            if v.is_empty() || v.len() > 4 {
+            if v.is_empty() || v.len() > 5 {
                 return Err(ErrorKind::Other(
                     "config 'account' takes 1 to 4 parameters".to_string(),
                 )
                 .into());
             }
-            let balance = v.get(1).and_then(|s| s.parse::<Balance>().ok());
-            let sequence_number = v.get(2).and_then(|s| s.parse::<u64>().ok());
-            let role = v.get(3).and_then(|s| s.parse::<Role>().ok());
-            // These two are mutually exclusive, so we can double-use the third position
+
+            let mut next_to_parse = 1;
+            let account_address = v
+                .get(next_to_parse)
+                .and_then(|s| AccountAddress::from_hex_literal(s).ok());
+            if account_address.is_some() {
+                next_to_parse += 1;
+            }
+
+            let balance = v.get(next_to_parse).and_then(|s| s.parse::<Balance>().ok());
+            if balance.is_some() {
+                next_to_parse += 1;
+            }
+            let sequence_number = v.get(next_to_parse).and_then(|s| s.parse::<u64>().ok());
+            if sequence_number.is_some() {
+                next_to_parse += 1;
+            }
+
+            let role = v.get(next_to_parse).and_then(|s| s.parse::<Role>().ok());
+            if role.is_some() {
+                next_to_parse += 1;
+            }
+
+            // Now, we don't need to care whether they are exclusive.
+            // ~These two are mutually exclusive, so we can double-use the third position~
             let account_type_specifier = v
-                .get(3)
+                .get(next_to_parse)
                 .and_then(|s| s.parse::<AccountRoleSpecifier>().ok());
+
             return Ok(Entry::AccountDefinition(AccountDefinition {
                 name: v[0].to_string(),
+                address: account_address,
                 balance,
                 sequence_number,
                 role,
@@ -207,7 +232,7 @@ impl Config {
             match entry {
                 Entry::AccountDefinition(def) if entry.is_address() => {
                     let (privkey, pubkey) = keygen.generate_keypair();
-                    let account = Account::with_keypair(privkey, pubkey);
+                    let account = Account::with_keypair(privkey, pubkey, def.address);
                     let name = def.name.to_ascii_lowercase();
                     let entry = addresses.entry(name);
                     match entry {
@@ -237,9 +262,8 @@ impl Config {
                         )
                     } else {
                         let (privkey, pubkey) = keygen.generate_keypair();
-                        AccountData::with_keypair(
-                            privkey,
-                            pubkey,
+                        AccountData::with_account(
+                            Account::with_keypair(privkey, pubkey, def.address),
                             balance.amount,
                             balance.currency_code,
                             def.sequence_number.unwrap_or(0),

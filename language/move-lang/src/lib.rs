@@ -17,7 +17,7 @@ pub mod naming;
 pub mod parser;
 pub mod shared;
 pub mod test_utils;
-mod to_bytecode;
+pub mod to_bytecode;
 pub mod typing;
 
 use anyhow::anyhow;
@@ -201,7 +201,7 @@ pub fn output_compiled_units(
 // Translations
 //**************************************************************************************************
 
-fn check_program(
+pub fn check_program(
     prog: Result<parser::ast::Program, Errors>,
     sender_opt: Option<Address>,
 ) -> Result<cfgir::ast::Program, Errors> {
@@ -316,7 +316,7 @@ fn leak_str(s: &str) -> &'static str {
     Box::leak(Box::new(s.to_owned()))
 }
 
-fn parse_file(
+pub fn parse_file(
     files: &mut FilesSourceText,
     fname: &'static str,
 ) -> anyhow::Result<(Vec<parser::ast::Definition>, MatchedFileCommentMap, Errors)> {
@@ -325,14 +325,15 @@ fn parse_file(
         .map_err(|err| std::io::Error::new(err.kind(), format!("{}: {}", err, fname)))?;
     let mut source_buffer = String::new();
     f.read_to_string(&mut source_buffer)?;
-    let (no_comments_buffer, comment_map) = match strip_comments_and_verify(fname, &source_buffer) {
-        Err(errs) => {
-            errors.extend(errs.into_iter());
-            files.insert(fname, source_buffer);
-            return Ok((vec![], MatchedFileCommentMap::new(), errors));
-        }
-        Ok(result) => result,
-    };
+    let (no_comments_buffer, comment_map, _regular_comment_map) =
+        match strip_comments_and_verify(fname, &source_buffer) {
+            Err(errs) => {
+                errors.extend(errs.into_iter());
+                files.insert(fname, source_buffer);
+                return Ok((vec![], MatchedFileCommentMap::new(), errors));
+            }
+            Ok(result) => result,
+        };
     let (defs, comments) = match parse_file_string(fname, &no_comments_buffer, comment_map) {
         Ok(defs_and_comments) => defs_and_comments,
         Err(errs) => {
@@ -411,7 +412,10 @@ pub type FileCommentMap = BTreeMap<Span, String>;
 /// (`/// .. <newline>` and `/** .. */`) will be not included in extracted comment string. The
 /// span in the returned map, however, covers the whole region of the comment, including the
 /// delimiters.
-fn strip_comments(fname: &'static str, input: &str) -> Result<(String, FileCommentMap), Errors> {
+pub fn strip_comments(
+    fname: &'static str,
+    input: &str,
+) -> Result<(String, FileCommentMap, FileCommentMap), Errors> {
     const SLASH: char = '/';
     const SPACE: char = ' ';
     const STAR: char = '*';
@@ -427,7 +431,7 @@ fn strip_comments(fname: &'static str, input: &str) -> Result<(String, FileComme
 
     let mut source = String::with_capacity(input.len());
     let mut comment_map = FileCommentMap::new();
-
+    let mut regular_comment_map = FileCommentMap::new();
     let mut state = State::Source;
     let mut pos = 0;
     let mut comment_start_pos = 0;
@@ -438,8 +442,13 @@ fn strip_comments(fname: &'static str, input: &str) -> Result<(String, FileComme
         |peekable: &mut Peekable<Chars>, chr| peekable.peek().map(|c| *c == chr).unwrap_or(false);
 
     let mut commit_comment = |state, start_pos, end_pos, content: String| match state {
-        State::BlockComment if !content.starts_with('*') || content.starts_with("**") => {}
-        State::LineComment if !content.starts_with('/') || content.starts_with("//") => {}
+        State::BlockComment if !content.starts_with('*') || content.starts_with("**") => {
+            // hack: find a better to to handle non-doc comments
+            regular_comment_map.insert(Span::new(start_pos, end_pos), content);
+        }
+        State::LineComment if !content.starts_with('/') || content.starts_with("//") => {
+            regular_comment_map.insert(Span::new(start_pos, end_pos), content);
+        }
         _ => {
             comment_map.insert(Span::new(start_pos, end_pos), content[1..].to_string());
         }
@@ -568,15 +577,15 @@ fn strip_comments(fname: &'static str, input: &str) -> Result<(String, FileComme
         State::Source | State::String => {}
     }
 
-    Ok((source, comment_map))
+    Ok((source, comment_map, regular_comment_map))
 }
 
 // We restrict strings to only ascii visual characters (0x20 <= c <= 0x7E) or a permitted newline
 // character--\n--or a tab--\t.
-fn strip_comments_and_verify(
+pub fn strip_comments_and_verify(
     fname: &'static str,
     string: &str,
-) -> Result<(String, FileCommentMap), Errors> {
+) -> Result<(String, FileCommentMap, FileCommentMap), Errors> {
     verify_string(fname, string)?;
     strip_comments(fname, string)
 }

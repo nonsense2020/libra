@@ -98,6 +98,16 @@ impl<'a> MoveValueAnnotator<'a> {
         self.annotate_struct(&move_struct, &ty)
     }
 
+    /// View struct with provided `ty`
+    pub fn view_struct(&self, ty: StructTag, blob: &[u8]) -> Result<AnnotatedMoveStruct> {
+        let ty = self.cache.resolve_struct(&ty)?;
+        let struct_def = (&ty)
+            .try_into()
+            .map_err(|e: PartialVMError| e.finish(Location::Undefined).into_vm_status())?;
+        let move_struct = MoveStruct::simple_deserialize(blob, &struct_def)?;
+        self.annotate_struct(&move_struct, &ty)
+    }
+
     pub fn view_contract_event(&self, event: &ContractEvent) -> Result<AnnotatedMoveValue> {
         let ty = self.cache.resolve_type(event.type_tag())?;
         let move_ty = (&ty)

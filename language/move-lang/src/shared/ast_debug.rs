@@ -60,11 +60,11 @@ impl AstWriter {
         }
     }
 
-    fn normal() -> Self {
+    pub fn normal() -> Self {
         Self::new(false)
     }
 
-    fn verbose() -> Self {
+    pub fn verbose() -> Self {
         Self::new(true)
     }
 

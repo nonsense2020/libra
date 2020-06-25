@@ -16,25 +16,25 @@ use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 #[derive(Debug, StructOpt)]
 #[structopt(about = "Datatest-harness for running data-driven tests")]
-struct TestOpts {
+pub struct TestOpts {
     /// The FILTER string is tested against the name of all tests, and only those tests whose names
     /// contain the filter are run.
-    filter: Option<String>,
+    pub filter: Option<String>,
     #[structopt(long = "exact")]
     /// Exactly match filters rather than by substring
-    filter_exact: bool,
+    pub filter_exact: bool,
     #[structopt(long, default_value = "32", env = "RUST_TEST_THREADS")]
     /// Number of threads used for running tests in parallel
-    test_threads: NonZeroUsize,
+    pub test_threads: NonZeroUsize,
     #[structopt(short = "q", long)]
     /// Output minimal information
-    quiet: bool,
+    pub quiet: bool,
     #[structopt(long)]
     /// NO-OP: unsupported option, exists for compatibility with the default test harness
     nocapture: bool,
     #[structopt(long)]
     /// List all tests
-    list: bool,
+    pub list: bool,
     #[structopt(long)]
     /// NO-OP: unsupported option, exists for compatibility with the default test harness
     ignored: bool,
@@ -76,10 +76,46 @@ struct TestOpts {
     ensure_time: bool,
 }
 
+impl Default for TestOpts {
+    fn default() -> Self {
+        Self {
+            filter: None,
+            filter_exact: true,
+            test_threads: NonZeroUsize::new(32).unwrap(),
+            quiet: true,
+            nocapture: true,
+            list: true,
+            ignored: true,
+            include_ignored: true,
+            force_run_in_process: true,
+            exclude_should_panic: true,
+            test: true,
+            bench: true,
+            logfile: None,
+            skip: Vec::with_capacity(0),
+            show_output: true,
+            color: None,
+            format: None,
+            report_time: None,
+            ensure_time: true,
+        }
+    }
+}
+
 pub fn runner(reqs: &[Requirements]) {
     let options = TestOpts::from_args();
 
-    let tests: Vec<Test> = reqs.iter().flat_map(|req| req.expand()).collect();
+    let tests: Vec<Test> = reqs.iter().flat_map(|req| {
+        let tests = req.expand();
+        // We want to avoid silent fails due to typos in regexp!
+        if tests.is_empty() {
+            panic!(
+                "no test cases found for test '{}'. Scanned directory: '{}' with pattern '{}'",
+                req.test_name(), req.root(), req.pattern(),
+            );
+        }
+        tests
+    }).collect();
 
     if options.list {
         for test in &tests {
@@ -101,18 +137,23 @@ pub fn runner(reqs: &[Requirements]) {
     }
 }
 
-struct Test {
+pub struct Test {
     testfn: Box<dyn Fn() -> Result<()> + Send>,
     name: String,
 }
+impl Test {
+    pub fn name(&self) -> &str {
+        self.name.as_str()
+    }
+}
 
-enum TestResult {
+pub enum TestResult {
     Ok,
     Failed,
     FailedWithMsg(String),
 }
 
-fn run_tests(options: TestOpts, tests: Vec<Test>) -> io::Result<bool> {
+pub fn run_tests(options: TestOpts, tests: Vec<Test>) -> io::Result<bool> {
     let total = tests.len();
 
     // Filter out tests
@@ -178,7 +219,7 @@ fn run_test(test: Test, channel: Sender<(String, TestResult)>) {
     .unwrap();
 }
 
-struct TestSummary {
+pub struct TestSummary {
     stdout: StandardStream,
     total: usize,
     filtered_out: usize,
@@ -301,12 +342,22 @@ impl Requirements {
         }
     }
 
+    pub fn test_name(&self) -> &str {
+        self.test_name.as_str()
+    }
+    pub fn root(&self) -> &str {
+        self.root.as_str()
+    }
+    pub fn pattern(&self) -> &str {
+        self.pattern.as_str()
+    }
+
     /// Generate standard test descriptors ([`test::TestDescAndFn`]) from the descriptor of
     /// `#[datatest::files(..)]`.
     ///
     /// Scans all files in a given directory, finds matching ones and generates a test descriptor
     /// for each of them.
-    fn expand(&self) -> Vec<Test> {
+    pub fn expand(&self) -> Vec<Test> {
         let root = Path::new(&self.root).to_path_buf();
 
         let re = regex::Regex::new(&self.pattern)
@@ -326,14 +377,6 @@ impl Requirements {
                 }
             })
             .collect();
-
-        // We want to avoid silent fails due to typos in regexp!
-        if tests.is_empty() {
-            panic!(
-                "no test cases found for test '{}'. Scanned directory: '{}' with pattern '{}'",
-                self.test_name, self.root, self.pattern,
-            );
-        }
 
         tests
     }

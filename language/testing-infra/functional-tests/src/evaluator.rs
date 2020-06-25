@@ -464,7 +464,7 @@ fn is_precompiled_script(input_str: &str) -> Option<CompiledScript> {
     None
 }
 
-fn eval_transaction<TComp: Compiler>(
+pub fn eval_transaction<TComp: Compiler>(
     compiler: &mut TComp,
     exec: &mut FakeExecutor,
     idx: usize,

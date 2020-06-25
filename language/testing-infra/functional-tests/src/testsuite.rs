@@ -10,11 +10,13 @@ use crate::{
 use regex::Regex;
 use std::{env, fs::read_to_string, io::Write, iter, path::Path};
 use termcolor::{BufferWriter, Color, ColorChoice, ColorSpec, WriteColor};
+use crate::evaluator::EvaluationLog;
+use crate::common::LineSp;
 
 pub const PRETTY: &str = "PRETTY";
 pub const FILTER: &str = "FILTER";
 
-fn at_most_n_chars(s: impl IntoIterator<Item = char>, n: usize) -> String {
+fn at_most_n_chars(s: impl IntoIterator<Item=char>, n: usize) -> String {
     let mut it = s.into_iter();
     let mut s = String::new();
     for _ in 0..n {
@@ -81,6 +83,15 @@ pub fn functional_tests<TComp: Compiler>(
 
     let res = match_output(&log, &directives);
 
+    if res.is_success() {
+        return Ok(());
+    }
+
+    println_match_result(path, lines.as_slice(), directives, res, &log)?;
+    panic!("test failed")
+}
+
+pub fn println_match_result(path: &Path, lines: &[String], directives: Vec<LineSp<Directive>>, res: MatchResult, log: &EvaluationLog) -> datatest_stable::Result<()> {
     let errs = match res.status {
         MatchStatus::Success => return Ok(()),
         MatchStatus::Failure(errs) => errs,
@@ -240,6 +251,5 @@ pub fn functional_tests<TComp: Compiler>(
     }
     writeln!(output)?;
     bufwtr.print(&output)?;
-
-    panic!("test failed")
+    Ok(())
 }

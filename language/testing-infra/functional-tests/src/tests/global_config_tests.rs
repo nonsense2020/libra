@@ -6,6 +6,7 @@ use crate::{
     errors::*,
     tests::parse_each_line_as,
 };
+use move_core_types::account_address::AccountAddress;
 use move_core_types::identifier::IdentStr;
 
 #[test]
@@ -32,7 +33,7 @@ fn parse_account_negative() {
     for s in &[
         "//! account:",
         "//! account",
-        "//! account: alice, 1, 2, validator, 4",
+        "//! account: alice, 1, 2, validator, 4, 6",
     ] {
         s.parse::<Entry>().unwrap_err();
     }
@@ -122,4 +123,17 @@ fn build_global_config_7() {
     assert_eq!(config.accounts.len(), 1);
     assert_eq!(config.addresses.len(), 1);
     assert!(config.addresses.contains_key("bob"));
+}
+
+#[rustfmt::skip]
+#[test]
+fn build_global_config_8() {
+    let config = parse_and_build_config(r"
+        //! account: bob, 0x2
+    ").unwrap();
+
+    assert_eq!(config.accounts.len(), 2);
+    assert_eq!(config.addresses.len(), 0);
+    assert!(config.accounts.contains_key("bob"));
+    assert_eq!(*config.accounts.get("bob").unwrap().address(), AccountAddress::from_hex_literal("0x2").unwrap());
 }
