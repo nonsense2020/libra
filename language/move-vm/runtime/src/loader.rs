@@ -74,6 +74,21 @@ where
             .get(&key)
             .and_then(|idx| self.binaries.get(*idx))
     }
+
+    // fn remove(&mut self, key: &K) {
+    //     match self.id_map.get(&key) {
+    //         Some(idx) => {
+    //             self.binaries.remove(*idx);
+    //             self.id_map.remove(&key);
+    //         }
+    //         None => {}
+    //     }
+    // }
+
+    fn empty(&mut self) {
+        self.binaries.clear();
+        self.id_map.clear();
+    }
 }
 
 // A script cache is a map from the hash value of a script and the `Script` itself.
@@ -104,6 +119,10 @@ impl ScriptCache {
                 (script.entry_point(), script.parameter_tys.clone())
             }
         }
+    }
+
+    fn empty(&mut self) {
+        self.scripts.empty();
     }
 }
 
@@ -144,6 +163,27 @@ impl ModuleCache {
     // Retrieve a struct by index
     fn struct_at(&self, idx: usize) -> Arc<StructType> {
         Arc::clone(&self.structs[idx])
+    }
+
+    // fn remove(&mut self, id: ModuleId, _log_context: &impl LogContext) -> VMResult<()> {
+    //     match self.module_at(&id) {
+    //         Some(_module) => {
+    //             // remove module
+    //             self.modules.remove(&id);
+    //             self.structs
+    //                 .retain(|struct_type| &struct_type.module != &id);
+    //             self.functions
+    //                 .retain(|function| function.module_id() != Some(&id));
+    //         }
+    //         None => {}
+    //     }
+    //     Ok(())
+    // }
+
+    fn empty(&mut self) {
+        self.modules.empty();
+        self.functions.clear();
+        self.structs.clear();
     }
 
     //
@@ -1080,6 +1120,22 @@ impl Loader {
         Ok(())
     }
 
+    #[allow(unused)]
+    pub(crate) fn empty_cache(&self) -> VMResult<()> {
+        //println!("empty the code cache");
+        self.scripts.write().empty();
+        self.module_cache.write().empty();
+        self.type_cache.write().empty();
+        Ok(())
+    }
+
+    // pub(crate) fn module_cached(&self, module_id: &ModuleId) -> bool {
+    //     match self.module_cache.read().module_at(module_id) {
+    //         Some(_) => true,
+    //         None => false,
+    //     }
+    // }
+
     //
     // Internal helpers
     //
@@ -1296,6 +1352,10 @@ impl<'a> Resolver<'a> {
             BinaryType::Module(module) => module.field_instantiation_count(idx.0),
             BinaryType::Script(_) => unreachable!("Scripts cannot have type instructions"),
         }
+    }
+
+    pub(crate) fn type_to_type_tag(&self, ty: &Type) -> PartialVMResult<TypeTag> {
+        self.loader.type_to_type_tag(ty)
     }
 
     pub(crate) fn type_to_type_layout(&self, ty: &Type) -> PartialVMResult<MoveTypeLayout> {
@@ -1809,7 +1869,7 @@ impl Function {
         match &self.scope {
             Scope::Script(_) => "Script::main".into(),
             Scope::Module(id) => format!(
-                "0x{}::{}::{}",
+                "{}::{}::{}",
                 id.address(),
                 id.name().as_str(),
                 self.name.as_str()
@@ -1905,6 +1965,10 @@ impl TypeCache {
         Self {
             structs: HashMap::new(),
         }
+    }
+
+    fn empty(&mut self) {
+        self.structs.clear();
     }
 }
 

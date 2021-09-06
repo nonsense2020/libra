@@ -30,7 +30,7 @@ use tracing::warn;
 
 /// An instantiation of the MoveVM.
 pub(crate) struct VMRuntime {
-    loader: Loader,
+    pub(crate) loader: Loader,
 }
 
 // signer helper closure
@@ -247,7 +247,7 @@ impl VMRuntime {
         Ok(vals)
     }
 
-    fn create_signers_and_arguments(
+    pub(crate) fn create_signers_and_arguments(
         &self,
         file_format_version: u32,
         tys: &[Type],

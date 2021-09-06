@@ -4,9 +4,9 @@
 use crate::{
     cargo::selected_package::{SelectedInclude, SelectedPackages},
     config::CargoConfig,
+    context::XContext,
     utils::{
-        apply_sccache_if_possible, log_sccache_stats, project_root, sccache_should_run,
-        stop_sccache_server,
+        apply_sccache_if_possible, log_sccache_stats, sccache_should_run, stop_sccache_server,
     },
     Result,
 };
@@ -308,14 +308,14 @@ impl<'a> CargoCommand<'a> {
         }
     }
 
-    pub fn run_on_packages(&self, packages: &SelectedPackages<'_>) -> Result<()> {
+    pub fn run_on_packages(&self, packages: &SelectedPackages<'_>, xctx: &XContext) -> Result<()> {
         // Early return if we have no packages to run.
         if !packages.should_invoke() {
             info!("no packages to {}: exiting early", self.as_str());
             return Ok(());
         }
 
-        let mut cargo = self.prepare_cargo(packages);
+        let mut cargo = self.prepare_cargo(packages, xctx);
         cargo.run()
     }
 
@@ -323,13 +323,14 @@ impl<'a> CargoCommand<'a> {
     pub fn run_capture_messages(
         &self,
         packages: &SelectedPackages<'_>,
+        xctx: &XContext,
     ) -> Result<impl Iterator<Item = Result<Message>>> {
         // Early return if we have no packages to run.
         let output = if !packages.should_invoke() {
             info!("no packages to {}: exiting early", self.as_str());
             vec![]
         } else {
-            let mut cargo = self.prepare_cargo(packages);
+            let mut cargo = self.prepare_cargo(packages, xctx);
             cargo.args(&["--message-format", "json-render-diagnostics"]);
             cargo.run_with_output()?
         };
@@ -338,10 +339,10 @@ impl<'a> CargoCommand<'a> {
             .map(|message| message.context("error while parsing message from Cargo")))
     }
 
-    fn prepare_cargo(&self, packages: &SelectedPackages<'_>) -> Cargo {
+    fn prepare_cargo(&self, packages: &SelectedPackages<'_>, xctx: &XContext) -> Cargo {
         let mut cargo = Cargo::new(self.cargo_config(), self.as_str(), self.skip_sccache());
         cargo
-            .current_dir(project_root())
+            .current_dir(xctx.core().project_root())
             .args(self.direct_args())
             .packages(packages)
             .pass_through(self.pass_through_args())

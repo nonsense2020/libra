@@ -48,7 +48,7 @@ pub trait MoveStorage {
 }
 
 pub struct AccountDataCache {
-    data_map: BTreeMap<Type, (MoveTypeLayout, GlobalValue)>,
+    data_map: BTreeMap<StructTag, (MoveTypeLayout, GlobalValue)>,
     module_map: BTreeMap<Identifier, Vec<u8>>,
 }
 
@@ -106,21 +106,13 @@ impl<'r, 'l, S: MoveStorage> TransactionDataCache<'r, 'l, S> {
             }
 
             let mut resources = BTreeMap::new();
-            for (ty, (layout, gv)) in account_data_cache.data_map {
+            for (struct_tag, (layout, gv)) in account_data_cache.data_map {
                 match gv.into_effect()? {
                     GlobalValueEffect::None => (),
                     GlobalValueEffect::Deleted => {
-                        let struct_tag = match self.loader.type_to_type_tag(&ty)? {
-                            TypeTag::Struct(struct_tag) => struct_tag,
-                            _ => return Err(PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR)),
-                        };
                         resources.insert(struct_tag, None);
                     }
                     GlobalValueEffect::Changed(val) => {
-                        let struct_tag = match self.loader.type_to_type_tag(&ty)? {
-                            TypeTag::Struct(struct_tag) => struct_tag,
-                            _ => return Err(PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR)),
-                        };
                         let resource_blob = val
                             .simple_serialize(&layout)
                             .ok_or_else(|| PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR))?;
@@ -184,15 +176,15 @@ impl<'r, 'l, S: MoveStorage> DataStore for TransactionDataCache<'r, 'l, S> {
             (addr, AccountDataCache::new())
         });
 
-        if !account_cache.data_map.contains_key(ty) {
-            let ty_tag = match self.loader.type_to_type_tag(ty)? {
-                TypeTag::Struct(s_tag) => s_tag,
-                _ =>
-                // non-struct top-level value; can't happen
-                {
-                    return Err(PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR))
-                }
-            };
+        let ty_tag = match self.loader.type_to_type_tag(ty)? {
+            TypeTag::Struct(s_tag) => s_tag,
+            _ =>
+            // non-struct top-level value; can't happen
+            {
+                return Err(PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR))
+            }
+        };
+        if !account_cache.data_map.contains_key(&ty_tag) {
             let ty_layout = self.loader.type_to_type_layout(ty)?;
 
             let gv = match self.remote.get_resource(&addr, &ty_tag) {
@@ -226,12 +218,14 @@ impl<'r, 'l, S: MoveStorage> DataStore for TransactionDataCache<'r, 'l, S> {
                 }
             };
 
-            account_cache.data_map.insert(ty.clone(), (ty_layout, gv));
+            account_cache
+                .data_map
+                .insert(ty_tag.clone(), (ty_layout, gv));
         }
 
         Ok(account_cache
             .data_map
-            .get_mut(ty)
+            .get_mut(&ty_tag)
             .map(|(_ty_layout, gv)| gv)
             .expect("global value must exist"))
     }
