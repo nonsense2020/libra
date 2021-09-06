@@ -71,7 +71,7 @@ pub fn run(args: Args, xctx: XContext) -> Result<()> {
         skip_sccache: false,
     };
 
-    let messages = cmd.run_capture_messages(&packages)?;
+    let messages = cmd.run_capture_messages(&packages, &xctx)?;
 
     if args.no_run {
         // Don't proceed further.
