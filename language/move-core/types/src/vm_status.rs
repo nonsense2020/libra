@@ -459,25 +459,25 @@ pub enum StatusCode {
     BAD_TRANSACTION_FEE_CURRENCY = 25,
     // The feature requested is intended for a future Diem version instead of the current one
     FEATURE_UNDER_GATING = 26,
-    // The code is not running in genesis
-    NOT_GENESIS = 27,
-    // Config value doesn't exist
-    CONFIG_VALUE_DOES_NOT_EXIST = 28,
-    // Timestamp is invalid
-    INVALID_TIMESTAMP = 29,
-    // Coin to deposit is zero
-    COIN_DEPOSIT_IS_ZERO = 30,
-    // Token to destroy is not zero
-    DESTROY_TOKEN_NON_ZERO = 31,
-    // Block number mismatch
-    BLOCK_NUMBER_MISMATCH = 32,
-
-    // TODO: This two is added in diem, but with code 27 and 28.
     // The number of secondary signer addresses is different from the number of secondary
     // public keys provided.
-    SECONDARY_KEYS_ADDRESSES_COUNT_MISMATCH = 33,
+    SECONDARY_KEYS_ADDRESSES_COUNT_MISMATCH = 27,
     // There are duplicates among signers, including the sender and all the secondary signers
-    SIGNERS_CONTAIN_DUPLICATES = 34,
+    SIGNERS_CONTAIN_DUPLICATES = 28,
+
+    // The code is not running in genesis
+    NOT_GENESIS = 500,
+    // Config value doesn't exist
+    CONFIG_VALUE_DOES_NOT_EXIST = 501,
+    // Timestamp is invalid
+    INVALID_TIMESTAMP = 502,
+    // Coin to deposit is zero
+    COIN_DEPOSIT_IS_ZERO = 503,
+    // Token to destroy is not zero
+    DESTROY_TOKEN_NON_ZERO = 504,
+    // Block number mismatch
+    BLOCK_NUMBER_MISMATCH = 505,
+
 
     // When a code module/script is published it is verified. These are the
     // possible errors that can arise from the verification process.
