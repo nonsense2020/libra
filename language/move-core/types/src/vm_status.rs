@@ -477,6 +477,8 @@ pub enum StatusCode {
     DESTROY_TOKEN_NON_ZERO = 504,
     // Block number mismatch
     BLOCK_NUMBER_MISMATCH = 505,
+    // Signer delegated
+    SIGNER_ALREADY_DELEGATED = 506,
 
 
     // When a code module/script is published it is verified. These are the
