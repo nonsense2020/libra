@@ -530,14 +530,14 @@ procedure {:inline 1} $1_DiemAccount_destroy_signer(
 // ==================================================================================
 // Native account
 
-procedure {:inline 1} $Account_create_signer(
+procedure {:inline 1} $1_Account_create_signer(
   addr: int
 ) returns (signer: int) {
     // A signer is currently identical to an address.
     signer := addr;
 }
 
-procedure {:inline 1} $Account_destroy_signer(
+procedure {:inline 1} $1_Account_destroy_signer(
   signer: int
 ) {
   return;
@@ -591,13 +591,13 @@ procedure {:inline 1} $1_Signature_ed25519_verify(
 {{ native::bcs_module(instance=instance) -}}
 {%- endfor %}
 
-procedure $BCS_to_address(v: Vec int) returns (res: int);
+procedure $1_BCS_to_address(v: Vec int) returns (res: int);
 
 // ----------------------------------------------------------------------------------
 // Native Token and Debug
-procedure $Token_name_of<T>(t_E: T) returns (res1: int, res2: Vec int, res3: Vec int);
-procedure $Debug_print<T>(x: T);
-procedure $Debug_print_stack_trace();
+procedure $1_Token_name_of<T>(t_E: T) returns (res1: int, res2: Vec int, res3: Vec int);
+procedure $1_Debug_print<T>(x: T);
+procedure $1_Debug_print_stack_trace();
 
 
 // ==================================================================================
