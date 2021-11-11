@@ -34,7 +34,7 @@ pub fn native_to_bytes(
     };
     let serialized_value = match serialized_value_opt {
         None => {
-            let cost = native_gas(context.cost_table(), NativeCostIndex::BCS_TO_BYTES, 1);
+            let cost = native_gas(context.cost_table(), NativeCostIndex::BCS_TO_BYTES as u8, 1);
             return Ok(NativeResult::err(cost, NFE_BCS_SERIALIZATION_FAILURE));
         }
         Some(serialized_value) => serialized_value,
@@ -43,7 +43,7 @@ pub fn native_to_bytes(
     // cost is proportional to the size of the serialized value
     let cost = native_gas(
         context.cost_table(),
-        NativeCostIndex::BCS_TO_BYTES,
+        NativeCostIndex::BCS_TO_BYTES as u8,
         serialized_value.len(),
     );
 

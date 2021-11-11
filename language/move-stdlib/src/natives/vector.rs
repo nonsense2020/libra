@@ -23,7 +23,7 @@ pub fn native_empty(
     debug_assert!(ty_args.len() == 1);
     debug_assert!(args.is_empty());
 
-    let cost = native_gas(context.cost_table(), NativeCostIndex::EMPTY, 1);
+    let cost = native_gas(context.cost_table(), NativeCostIndex::EMPTY as u8, 1);
     Vector::empty(cost, &ty_args[0])
 }
 
@@ -37,7 +37,7 @@ pub fn native_length(
 
     let r = pop_arg!(args, VectorRef);
 
-    let cost = native_gas(context.cost_table(), NativeCostIndex::LENGTH, 1);
+    let cost = native_gas(context.cost_table(), NativeCostIndex::LENGTH as u8, 1);
 
     let len = r.len(&ty_args[0])?;
     Ok(NativeResult::ok(cost, smallvec![len]))
@@ -56,7 +56,7 @@ pub fn native_push_back(
 
     let cost = native_gas(
         context.cost_table(),
-        NativeCostIndex::PUSH_BACK,
+        NativeCostIndex::PUSH_BACK as u8,
         e.size().get() as usize,
     );
 
@@ -75,7 +75,7 @@ pub fn native_borrow(
     let idx = pop_arg!(args, u64) as usize;
     let r = pop_arg!(args, VectorRef);
 
-    let cost = native_gas(context.cost_table(), NativeCostIndex::BORROW, 1);
+    let cost = native_gas(context.cost_table(), NativeCostIndex::BORROW as u8, 1);
 
     r.borrow_elem(idx, cost, &ty_args[0])
 }
@@ -90,7 +90,7 @@ pub fn native_pop(
 
     let r = pop_arg!(args, VectorRef);
 
-    let cost = native_gas(context.cost_table(), NativeCostIndex::POP_BACK, 1);
+    let cost = native_gas(context.cost_table(), NativeCostIndex::POP_BACK as u8, 1);
 
     r.pop(cost, &ty_args[0])
 }
@@ -105,7 +105,11 @@ pub fn native_destroy_empty(
 
     let v = pop_arg!(args, Vector);
 
-    let cost = native_gas(context.cost_table(), NativeCostIndex::DESTROY_EMPTY, 1);
+    let cost = native_gas(
+        context.cost_table(),
+        NativeCostIndex::DESTROY_EMPTY as u8,
+        1,
+    );
 
     v.destroy_empty(cost, &ty_args[0])
 }
@@ -122,7 +126,7 @@ pub fn native_swap(
     let idx1 = pop_arg!(args, u64) as usize;
     let r = pop_arg!(args, VectorRef);
 
-    let cost = native_gas(context.cost_table(), NativeCostIndex::SWAP, 1);
+    let cost = native_gas(context.cost_table(), NativeCostIndex::SWAP as u8, 1);
 
     r.swap(idx1, idx2, cost, &ty_args[0])
 }
