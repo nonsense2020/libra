@@ -29,7 +29,7 @@ pub fn native_sha2_256(
 
     let cost = native_gas(
         context.cost_table(),
-        NativeCostIndex::SHA2_256,
+        NativeCostIndex::SHA2_256 as u8,
         hash_arg.len(),
     );
 
@@ -78,7 +78,7 @@ pub fn native_sha3_256(
 
     let cost = native_gas(
         context.cost_table(),
-        NativeCostIndex::SHA3_256,
+        NativeCostIndex::SHA3_256 as u8,
         hash_arg.len(),
     );
 

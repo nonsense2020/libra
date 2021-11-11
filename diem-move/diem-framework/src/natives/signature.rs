@@ -26,7 +26,7 @@ pub fn native_ed25519_publickey_validation(
 
     let cost = native_gas(
         context.cost_table(),
-        NativeCostIndex::ED25519_VALIDATE_KEY,
+        NativeCostIndex::ED25519_VALIDATE_KEY as u8,
         key_bytes.len(),
     );
 
@@ -49,7 +49,7 @@ pub fn native_ed25519_signature_verification(
 
     let cost = native_gas(
         context.cost_table(),
-        NativeCostIndex::ED25519_VERIFY,
+        NativeCostIndex::ED25519_VERIFY as u8,
         msg.len(),
     );
 
