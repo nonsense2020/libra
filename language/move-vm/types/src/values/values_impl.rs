@@ -1135,6 +1135,15 @@ impl VMValueCast<Vec<u8>> for Value {
         }
     }
 }
+impl VMValueCast<Vec<u64>> for Value {
+    fn cast(self) -> PartialVMResult<Vec<u64>> {
+        match self.0 {
+            ValueImpl::Container(Container::VecU64(r)) => take_unique_ownership(r),
+            v => Err(PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR)
+                .with_message(format!("cannot cast {:?} to vector<u64>", v,))),
+        }
+    }
+}
 
 impl VMValueCast<SignerRef> for Value {
     fn cast(self) -> PartialVMResult<SignerRef> {
