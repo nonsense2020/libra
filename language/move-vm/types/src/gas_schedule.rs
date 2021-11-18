@@ -7,12 +7,13 @@
 //! operations or other native operations; the cost of each native operation will be returned by the
 //! native function itself.
 use mirai_annotations::*;
+pub use move_binary_format::file_format::NUMBER_OF_NATIVE_FUNCTIONS;
 use move_binary_format::{
     errors::{Location, PartialVMError, PartialVMResult, VMResult},
     file_format::{
         Bytecode, ConstantPoolIndex, FieldHandleIndex, FieldInstantiationIndex,
         FunctionHandleIndex, FunctionInstantiationIndex, StructDefInstantiationIndex,
-        StructDefinitionIndex, NUMBER_OF_NATIVE_FUNCTIONS,
+        StructDefinitionIndex,
     },
     file_format_common::{instruction_key, Opcodes},
 };
@@ -25,7 +26,8 @@ use move_core_types::{
 };
 use once_cell::sync::Lazy;
 
-static ZERO_COST_SCHEDULE: Lazy<CostTable> = Lazy::new(zero_cost_schedule);
+static ZERO_COST_SCHEDULE: Lazy<CostTable> =
+    Lazy::new(|| zero_cost_schedule(NUMBER_OF_NATIVE_FUNCTIONS));
 
 /// The Move VM implementation of state for gas metering.
 ///
@@ -164,7 +166,7 @@ pub fn new_from_instructions(
 
 // Only used for genesis and for tests where we need a cost table and
 // don't have a genesis storage state.
-pub fn zero_cost_schedule() -> CostTable {
+pub fn zero_cost_schedule(number_of_native_functions: usize) -> CostTable {
     use Bytecode::*;
     // The actual costs for the instructions in this table _DO NOT MATTER_. This is only used
     // for genesis and testing, and for these cases we don't need to worry
@@ -271,7 +273,7 @@ pub fn zero_cost_schedule() -> CostTable {
         ),
         (Nop, GasCost::new(0, 0)),
     ];
-    let native_table = (0..NUMBER_OF_NATIVE_FUNCTIONS)
+    let native_table = (0..number_of_native_functions)
         .map(|_| GasCost::new(0, 0))
         .collect::<Vec<GasCost>>();
     new_from_instructions(instrs, native_table)
