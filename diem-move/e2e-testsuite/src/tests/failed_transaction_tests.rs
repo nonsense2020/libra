@@ -12,7 +12,7 @@ use language_e2e_tests::{
     versioning::CURRENT_RELEASE_VERSIONS,
 };
 use move_core_types::gas_schedule::{GasAlgebra, GasPrice, GasUnits};
-use move_vm_types::gas_schedule::{zero_cost_schedule, GasStatus};
+use move_vm_types::gas_schedule::{zero_cost_schedule, GasStatus, NUMBER_OF_NATIVE_FUNCTIONS};
 
 #[test]
 fn failed_transaction_cleanup_test() {
@@ -33,7 +33,7 @@ fn failed_transaction_cleanup_test() {
             ..Default::default()
         };
 
-        let gas_schedule = zero_cost_schedule();
+        let gas_schedule = zero_cost_schedule(NUMBER_OF_NATIVE_FUNCTIONS);
         let mut gas_status = GasStatus::new(&gas_schedule, GasUnits::new(10_000));
 
         // TYPE_MISMATCH should be kept and charged.
