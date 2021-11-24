@@ -1718,6 +1718,97 @@ impl VectorRef {
 
         Ok(NativeResult::ok(cost, smallvec![]))
     }
+    pub fn remove(
+        &self,
+        idx: usize,
+        cost: InternalGasUnits<GasCarrier>,
+        type_param: &Type,
+    ) -> PartialVMResult<NativeResult> {
+        let c = self.0.container();
+        check_elem_layout(type_param, c)?;
+
+        let ret = match c {
+            Container::VecU8(r) => Value::u8(r.borrow_mut().remove(idx)),
+            Container::VecU64(r) => Value::u64(r.borrow_mut().remove(idx)),
+            Container::VecU128(r) => Value::u128(r.borrow_mut().remove(idx)),
+            Container::VecBool(r) => Value::bool(r.borrow_mut().remove(idx)),
+            Container::VecAddress(r) => Value::address(r.borrow_mut().remove(idx)),
+            Container::Vec(r) => Value(r.borrow_mut().remove(idx)),
+
+            Container::Locals(_) | Container::Struct(_) => unreachable!(),
+        };
+        self.0.mark_dirty();
+
+        Ok(NativeResult::ok(cost, smallvec![ret]))
+    }
+
+    pub fn reverse(
+        &self,
+        cost: InternalGasUnits<GasCarrier>,
+        type_param: &Type,
+    ) -> PartialVMResult<NativeResult> {
+        let c = self.0.container();
+        check_elem_layout(type_param, c)?;
+        macro_rules! reverse {
+            ($v: ident) => {{
+                $v.borrow_mut().reverse();
+            }};
+        }
+        match c {
+            Container::VecU8(r) => reverse!(r),
+            Container::VecU64(r) => reverse!(r),
+            Container::VecU128(r) => reverse!(r),
+            Container::VecBool(r) => reverse!(r),
+            Container::VecAddress(r) => reverse!(r),
+            Container::Vec(r) => {
+                reverse!(r)
+            }
+
+            Container::Locals(_) | Container::Struct(_) => unreachable!(),
+        }
+
+        self.0.mark_dirty();
+
+        Ok(NativeResult::ok(cost, smallvec![]))
+    }
+
+    pub fn append(
+        self,
+        cost: InternalGasUnits<GasCarrier>,
+        e: Vector,
+        type_param: &Type,
+    ) -> PartialVMResult<NativeResult> {
+        let c = self.0.container();
+        let r = &e.0;
+        check_elem_layout(type_param, c)?;
+        check_elem_layout(type_param, r)?;
+
+        match (c, r) {
+            (Container::Vec(c), Container::Vec(mut r)) => {
+                c.borrow_mut().append(r.get_mut());
+            }
+
+            (Container::VecU8(c), Container::VecU8(mut r)) => {
+                c.borrow_mut().append(r.get_mut());
+            }
+            (Container::VecU64(c), Container::VecU64(mut r)) => {
+                c.borrow_mut().append(r.get_mut());
+            }
+            (Container::VecU128(c), Container::VecU128(mut r)) => {
+                c.borrow_mut().append(r.get_mut());
+            }
+            (Container::VecBool(c), Container::VecBool(mut r)) => {
+                c.borrow_mut().append(r.get_mut());
+            }
+            (Container::VecAddress(c), Container::VecAddress(mut r)) => {
+                c.borrow_mut().append(r.get_mut());
+            }
+            (Container::Locals(_), _) | (Container::Struct(_), _) => unreachable!(),
+            _ => unreachable!(),
+        }
+        self.0.mark_dirty();
+        Ok(NativeResult::ok(cost, smallvec![]))
+    }
 }
 
 impl Vector {
