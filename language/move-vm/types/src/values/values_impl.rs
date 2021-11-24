@@ -1748,30 +1748,30 @@ impl VectorRef {
         e: Vector,
         type_param: &Type,
     ) -> PartialVMResult<NativeResult> {
-        let c = self.0.container();
-        let r = &e.0;
-        check_elem_layout(type_param, c)?;
-        check_elem_layout(type_param, r)?;
+        let lhs = self.0.container();
+        let other = e.0;
+        check_elem_layout(type_param, lhs)?;
+        check_elem_layout(type_param, &other)?;
 
-        match (c, r) {
-            (Container::Vec(c), Container::Vec(mut r)) => {
-                c.borrow_mut().append(r.get_mut());
+        match (lhs, other) {
+            (Container::Vec(c), Container::Vec(r)) => {
+                c.borrow_mut().append(r.borrow_mut().as_mut());
             }
 
-            (Container::VecU8(c), Container::VecU8(mut r)) => {
-                c.borrow_mut().append(r.get_mut());
+            (Container::VecU8(c), Container::VecU8(r)) => {
+                c.borrow_mut().append(r.borrow_mut().as_mut());
             }
-            (Container::VecU64(c), Container::VecU64(mut r)) => {
-                c.borrow_mut().append(r.get_mut());
+            (Container::VecU64(c), Container::VecU64(r)) => {
+                c.borrow_mut().append(r.borrow_mut().as_mut());
             }
-            (Container::VecU128(c), Container::VecU128(mut r)) => {
-                c.borrow_mut().append(r.get_mut());
+            (Container::VecU128(c), Container::VecU128(r)) => {
+                c.borrow_mut().append(r.borrow_mut().as_mut());
             }
-            (Container::VecBool(c), Container::VecBool(mut r)) => {
-                c.borrow_mut().append(r.get_mut());
+            (Container::VecBool(c), Container::VecBool(r)) => {
+                c.borrow_mut().append(r.borrow_mut().as_mut());
             }
-            (Container::VecAddress(c), Container::VecAddress(mut r)) => {
-                c.borrow_mut().append(r.get_mut());
+            (Container::VecAddress(c), Container::VecAddress(r)) => {
+                c.borrow_mut().append(r.borrow_mut().as_mut());
             }
             (Container::Locals(_), _) | (Container::Struct(_), _) => unreachable!(),
             _ => unreachable!(),
