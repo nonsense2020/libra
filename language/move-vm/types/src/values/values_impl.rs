@@ -1738,7 +1738,9 @@ impl VectorRef {
             Container::Locals(_) | Container::Struct(_) => unreachable!(),
         };
         self.0.mark_dirty();
-
+        // cost with memory
+        let memory_cost = c.size().get() * ((c.len() - idx) as u64) / (c.len() as u64);
+        let cost = cost.mul(AbstractMemorySize::new(std::cmp::max(1, memory_cost)));
         Ok(NativeResult::ok(cost, smallvec![ret]))
     }
 
@@ -1766,10 +1768,13 @@ impl VectorRef {
 
             Container::Locals(_) | Container::Struct(_) => unreachable!(),
         }
-
         self.0.mark_dirty();
 
-        Ok(NativeResult::ok(cost, smallvec![]))
+        // half of the memory size.
+        let memory_cost = std::cmp::max(1, c.size().get() / 2);
+        let cost = cost.get() * memory_cost;
+
+        Ok(NativeResult::ok(InternalGasUnits::new(cost), smallvec![]))
     }
 
     pub fn append(
@@ -1782,6 +1787,8 @@ impl VectorRef {
         let other = e.0;
         check_elem_layout(type_param, lhs)?;
         check_elem_layout(type_param, &other)?;
+        // cost with memory
+        let cost = cost.mul(other.size());
 
         match (lhs, other) {
             (Container::Vec(c), Container::Vec(r)) => {
@@ -1807,6 +1814,7 @@ impl VectorRef {
             _ => unreachable!(),
         }
         self.0.mark_dirty();
+
         Ok(NativeResult::ok(cost, smallvec![]))
     }
 }
