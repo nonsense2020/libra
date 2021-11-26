@@ -1697,6 +1697,8 @@ impl VectorRef {
         let c = self.0.container();
         check_elem_layout(type_param, c)?;
 
+        // len must be >0
+        let len = c.len();
         let ret = match c {
             Container::VecU8(r) => Value::u8(r.borrow_mut().remove(idx)),
             Container::VecU64(r) => Value::u64(r.borrow_mut().remove(idx)),
@@ -1709,7 +1711,7 @@ impl VectorRef {
         };
         self.0.mark_dirty();
         // cost with memory
-        let memory_cost = c.size().get() * ((c.len() - idx) as u64) / (c.len() as u64);
+        let memory_cost = c.size().get() * ((len - idx) as u64) / (len as u64);
         let cost = cost.mul(AbstractMemorySize::new(std::cmp::max(1, memory_cost)));
         Ok(NativeResult::ok(cost, smallvec![ret]))
     }
