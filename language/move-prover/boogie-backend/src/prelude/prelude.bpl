@@ -510,7 +510,13 @@ ensures LenVec(res) == 32;               // result is 32 bytes.
 function {:inline} $1_Hash_$sha3_256(val: Vec int): Vec int {
     $1_Hash_sha3(val)
 }
-
+procedure {:inline 1} $1_U256_from_bytes(data: Vec int, be: bool): $1_U256_U256;
+procedure {:inline 1} $1_U256_native_add(data: $Mutation $1_U256_U256, be: $1_U256_U256);
+procedure {:inline 1} $1_U256_native_sub(data: $Mutation $1_U256_U256, be: $1_U256_U256);
+procedure {:inline 1} $1_U256_native_mul(data: $Mutation $1_U256_U256, be: $1_U256_U256);
+procedure {:inline 1} $1_U256_native_div(data: $Mutation $1_U256_U256, be: $1_U256_U256);
+procedure {:inline 1} $1_U256_native_pow(data: $Mutation $1_U256_U256, be: $1_U256_U256);
+procedure {:inline 1} $1_U256_native_rem(data: $Mutation $1_U256_U256, be: $1_U256_U256);
 // ==================================================================================
 // Native diem_account
 
