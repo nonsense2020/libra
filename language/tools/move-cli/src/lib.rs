@@ -42,15 +42,15 @@ pub struct Move {
         parse(from_os_str),
         default_value = "."
     )]
-    package_path: PathBuf,
+    pub package_path: PathBuf,
 
     /// Print additional diagnostics if available.
     #[structopt(short = "v", global = true)]
-    verbose: bool,
+    pub verbose: bool,
 
     /// Package build options
     #[structopt(flatten)]
-    build_config: BuildConfig,
+    pub build_config: BuildConfig,
 }
 
 /// MoveCLI is the CLI that will be executed by the `move-cli` command

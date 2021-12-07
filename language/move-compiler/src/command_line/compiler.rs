@@ -379,11 +379,16 @@ pub fn construct_pre_compiled_lib(
     flags: Flags,
     named_address_values: BTreeMap<String, NumericalAddress>,
 ) -> anyhow::Result<Result<FullyCompiledProgram, (FilesSourceText, Diagnostics)>> {
-    let (files, pprog_and_comments_res) = Compiler::new(&[], deps)
+    let compiler = Compiler::new(&[], deps)
         .set_interface_files_dir_opt(interface_files_dir_opt)
         .set_flags(flags)
-        .set_named_address_values(named_address_values)
-        .run::<PASS_PARSER>()?;
+        .set_named_address_values(named_address_values);
+    construct_pre_compiled_lib_from_compiler(compiler)
+}
+pub fn construct_pre_compiled_lib_from_compiler(
+    compiler: Compiler,
+) -> anyhow::Result<Result<FullyCompiledProgram, (FilesSourceText, Diagnostics)>> {
+    let (files, pprog_and_comments_res) = compiler.run::<PASS_PARSER>()?;
 
     let (_comments, stepped) = match pprog_and_comments_res {
         Err(errors) => return Ok(Err((files, errors))),
