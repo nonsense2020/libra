@@ -79,6 +79,7 @@ pub trait MoveTestAdapter<'a> {
     fn compiled_state(&mut self) -> &mut CompiledState<'a>;
     fn default_syntax(&self) -> SyntaxChoice;
     fn init(
+        test_path: &Path,
         default_syntax: SyntaxChoice,
         option: Option<&'a FullyCompiledProgram>,
         init_data: Option<TaskInput<(InitCommand, Self::ExtraInitArgs)>>,
@@ -496,7 +497,7 @@ where
             None
         }
     };
-    let mut adapter = Adapter::init(default_syntax, fully_compiled_program_opt, init_opt);
+    let mut adapter = Adapter::init(path, default_syntax, fully_compiled_program_opt, init_opt);
     for task in tasks {
         handle_known_task(&mut output, &mut adapter, task);
     }
