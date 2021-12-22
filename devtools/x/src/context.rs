@@ -8,8 +8,7 @@ use crate::{
     Result,
 };
 use anyhow::Context;
-use std::path::Path;
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use std::convert::TryInto;
 use x_core::XCoreContext;
 
@@ -26,11 +25,11 @@ impl XContext {
         Self::with_project_root(project_root())
     }
 
-    pub fn with_project_root(project_root: &'static Path) -> Result<Self> {
+    pub fn with_project_root(project_root: &'static Utf8Path) -> Result<Self> {
         Self::with_config(XConfig::from_project_root(project_root)?, project_root)
     }
     /// Creates a new `GlobalContext` based on the given config.
-    pub fn with_config(x_config: XConfig, project_root: &'static Path) -> Result<Self> {
+    pub fn with_config(x_config: XConfig, project_root: &'static Utf8Path) -> Result<Self> {
         let current_dir: Utf8PathBuf = std::env::current_dir()
             .with_context(|| "error while fetching current dir")?
             .try_into()
