@@ -396,7 +396,26 @@ impl<'a> CompiledState<'a> {
             .values()
             .map(|pmod| &pmod.interface_file.as_ref().unwrap().0)
     }
-
+    pub fn add_named_addresses(
+        &mut self,
+        addresses: BTreeMap<impl Into<Symbol>, NumericalAddress>,
+    ) -> Result<()> {
+        let mut named_address_mapping = addresses
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect::<BTreeMap<_, _>>();
+        for (k, _) in &named_address_mapping {
+            if self.named_address_mapping.contains_key(k) {
+                anyhow::bail!("name {} already assigned", k);
+            }
+        }
+        self.named_address_mapping
+            .append(&mut named_address_mapping);
+        Ok(())
+    }
+    pub fn contain_name_address(&self, k: impl Into<Symbol>) -> bool {
+        self.named_address_mapping.contains_key(&k.into())
+    }
     pub fn add(&mut self, named_addr_opt: Option<Symbol>, module: CompiledModule) {
         let id = module.self_id();
         if let Some(named_addr) = named_addr_opt {
