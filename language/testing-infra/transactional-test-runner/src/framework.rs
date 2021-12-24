@@ -215,6 +215,11 @@ pub trait MoveTestAdapter<'a> {
                         let (unit, warnings_opt) = compile_source_unit(
                             state.pre_compiled_deps,
                             state.named_address_mapping.clone(),
+                            state
+                                .compiled_module_named_address_mapping
+                                .iter()
+                                .map(|(k, v)| (k.clone(), v.as_str().to_string()))
+                                .collect(),
                             &state.interface_files().cloned().collect::<Vec<_>>(),
                             data_path.to_owned(),
                         )?;
@@ -269,6 +274,11 @@ pub trait MoveTestAdapter<'a> {
                         let (unit, warning_opt) = compile_source_unit(
                             state.pre_compiled_deps,
                             state.named_address_mapping.clone(),
+                            state
+                                .compiled_module_named_address_mapping
+                                .iter()
+                                .map(|(k, v)| (k.clone(), v.as_str().to_string()))
+                                .collect(),
                             &state.interface_files().cloned().collect::<Vec<_>>(),
                             data_path.to_owned(),
                         )?;
@@ -434,6 +444,7 @@ impl<'a> CompiledState<'a> {
 fn compile_source_unit(
     pre_compiled_deps: Option<&FullyCompiledProgram>,
     named_address_mapping: BTreeMap<Symbol, NumericalAddress>,
+    compiled_module_named_address_mapping: BTreeMap<ModuleId, String>,
     deps: &[String],
     path: String,
 ) -> Result<(AnnotatedCompiledUnit, Option<String>)> {
@@ -454,6 +465,7 @@ fn compile_source_unit(
     let (mut files, comments_and_compiler_res) = move_compiler::Compiler::new(&[path], deps)
         .set_pre_compiled_lib_opt(pre_compiled_deps)
         .set_named_address_values(named_address_mapping)
+        .set_compiled_module_named_address_mapping(compiled_module_named_address_mapping)
         .run::<PASS_COMPILATION>()?;
     let units_or_diags = comments_and_compiler_res
         .map(|(_comments, move_compiler)| move_compiler.into_compiled_units());
