@@ -532,13 +532,13 @@ procedure {:inline 1} $1_DiemAccount_destroy_signer(
 
 procedure {:inline 1} $1_Account_create_signer(
   addr: int
-) returns (signer: int) {
+) returns (signer: $signer) {
     // A signer is currently identical to an address.
-    signer := addr;
+    signer := $signer(addr);
 }
 
 procedure {:inline 1} $1_Account_destroy_signer(
-  signer: int
+  signer: $signer
 ) {
   return;
 }
@@ -626,6 +626,15 @@ procedure $1_Debug_print_stack_trace();
 {%- for instance in event_instances %}
 {%- if emit_generic_event %}
 {% set_global emit_generic_event = false %}
+
+// Publishing a generator does nothing. Currently we just ignore this function and do not represent generators
+// at all because they are not publicly exposed by the Event module.
+// TODO: we should check (and abort with the right code) if a generator already exists for
+// the signer.
+
+procedure {:inline 1} $1_Event_publish_generator(signer: $signer) {
+}
+
 
 // Generic code for dealing with mutations (havoc) still requires type and memory declarations.
 type $1_Event_EventHandleGenerator;
