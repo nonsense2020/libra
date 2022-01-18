@@ -58,16 +58,30 @@ pub fn publish(
         let mut has_error = false;
         match override_ordering {
             None => {
+                let mut sender_opt = None;
+                let mut module_bytes_vec = vec![];
                 for unit in package.modules()? {
                     let module_bytes = unit.unit.serialize();
+                    module_bytes_vec.push(module_bytes);
                     let id = module(&unit.unit)?.self_id();
                     let sender = *id.address();
-
-                    let res = session.publish_module(module_bytes, sender, &mut gas_status);
-                    if let Err(err) = res {
-                        explain_publish_error(err, state, unit)?;
-                        has_error = true;
-                        break;
+                    if sender_opt.is_none() {
+                        sender_opt = Some(sender);
+                    }
+                }
+                match sender_opt {
+                    None => bail!("No modules to publish"),
+                    Some(sender) => {
+                        let res = session.publish_module_bundle(
+                            module_bytes_vec,
+                            sender,
+                            &mut gas_status,
+                        );
+                        if let Err(err) = res {
+                            // TODO (mengxu): explain publish errors in multi-module publishing
+                            println!("Invalid multi-module publishing: {}", err);
+                            has_error = true;
+                        }
                     }
                 }
             }
