@@ -478,6 +478,9 @@ pub fn run_move_unit_tests(
             }
         }
     }
+    for x in test_plan.module_info.keys() {
+        println!("{:?}", x);
+    }
 
     let trace_path = pkg_path.join(".trace");
     let coverage_map_path = pkg_path
